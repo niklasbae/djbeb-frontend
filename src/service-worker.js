@@ -1,9 +1,9 @@
 self.addEventListener("install", (event) => {
     event.waitUntil(
-      caches.open("spotibaby-cache").then((cache) => {
+      caches.open("djbeb-cache").then((cache) => {
         return cache.addAll([{
-    "name": "SpotiBaby",
-    "short_name": "SpotiBaby",
+    "name": "DJ Beb",
+    "short_name": "DJ Beb",
     "description": "A simple Spotify remote web app for kids",
     "start_url": "/",
     "display": "standalone",

@@ -43,7 +43,7 @@ export function SpotifyWebPlayer({
 
     window.onSpotifyWebPlaybackSDKReady = () => {
       const newPlayer = new Spotify.Player({
-        name: "SpotiBaby Web Player",
+        name: "DJ Beb Web Player",
         getOAuthToken: (cb) => cb(token),
         volume: 0.5,
       });

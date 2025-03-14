@@ -57,7 +57,7 @@ const InstallButton = () => {
       onClick={installPWA}
       className="fixed bottom-4 right-4 px-6 py-2 bg-green-500 text-white rounded-lg shadow-lg hover:bg-green-600 transition"
     >
-      Install SpotiBaby
+      Install DJ Beb
     </button>
   ) : null;
 };
