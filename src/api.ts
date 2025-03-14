@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+export const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5151";
 
 export const api = {
   login: () => {
