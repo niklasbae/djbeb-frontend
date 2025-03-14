@@ -1,0 +1,29 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+/* Force styles to apply */
+* {
+  font-family: "Circular", "Spotify Circular", "Helvetica", "Arial", sans-serif !important;
+}
+
+body {
+  background-color: #f9fafb; /* Light gray for contrast */
+  color: #111827; /* Dark text */
+}
+
+img {
+  display: block;
+}
+
+/* Ensure playlist names are readable */
+p {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}
+
+.playlist-image {
+  width: 160px !important;
+  height: 160px !important;
+  object-fit: cover !important;
+  display: block !important;
+}
