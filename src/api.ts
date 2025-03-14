@@ -1,66 +1,76 @@
 export const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5151";
 
+const getToken = () => localStorage.getItem("jwt");
+
 export const api = {
   login: () => {
-    window.location.href = `${baseUrl}/api/spotify/login`; // ✅ Added `/api`
+    window.location.href = `${baseUrl}/api/spotify/login`;
   },
 
+  // ✅ No authenticate endpoint needed (JWT is provided on login redirect)
+
   getPlaylists: async () => {
-    const res = await fetch(`${baseUrl}/api/spotify/playlists`, { credentials: "include" }); // ✅ Added `/api`
+    const res = await fetch(`${baseUrl}/api/spotify/playlists`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
     if (!res.ok) throw new Error(`Error: ${res.statusText}`);
     return res.json();
   },
 
   getPlaylistTracks: async (id: string) => {
-    const res = await fetch(`${baseUrl}/api/spotify/playlist/${id}`, { credentials: "include" }); // ✅ Added `/api`
+    const res = await fetch(`${baseUrl}/api/spotify/playlist/${id}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
     if (!res.ok) throw new Error(`Error: ${res.statusText}`);
-    return res.json();
-  },
-
-  getSpotifyToken: async () => {
-    const res = await fetch(`${baseUrl}/api/spotify/token`, { credentials: "include" }); // ✅ Added `/api`
-    if (!res.ok) throw new Error("Failed to fetch token");
     return res.json();
   },
 
   playTrack: async (trackId: string, deviceId: string, playlistId: string) => {
-    const res = await fetch(`${baseUrl}/api/spotify/play`, { // ✅ Added `/api`
+    const res = await fetch(`${baseUrl}/api/spotify/play`, {
       method: "PUT",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify({ trackId, deviceId, playlistId }),
     });
-
     if (!res.ok) throw new Error(`Error: ${res.statusText}`);
     return res.json();
   },
 
-  pausePlayback: () =>
-    fetch(`${baseUrl}/api/spotify/pause`, { method: "POST", credentials: "include" }), // ✅ Added `/api`
-
-  resumePlayback: (deviceId: string) =>
-    fetch(`${baseUrl}/api/spotify/resume?device_id=${deviceId}`, { // ✅ Added `/api`
+  pausePlayback: async () => {
+    const res = await fetch(`${baseUrl}/api/spotify/pause`, {
       method: "POST",
-      credentials: "include",
-    }),
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error(`Error: ${res.statusText}`);
+    return res.text();
+  },
+
+  resumePlayback: async (deviceId: string) => {
+    const res = await fetch(`${baseUrl}/api/spotify/resume?device_id=${deviceId}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error(`Error: ${res.statusText}`);
+    return res.text();
+  },
 
   seekPlayback: async (positionMs: number, deviceId: string) => {
-    const res = await fetch(`${baseUrl}/api/spotify/seek`, { // ✅ Added `/api`
+    const res = await fetch(`${baseUrl}/api/spotify/seek`, {
       method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
       body: JSON.stringify({ positionMs, deviceId }),
     });
 
     if (!res.ok) throw new Error(`Error: ${res.statusText}`);
 
     const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      return res.json();
-    } else {
-      return res.text(); // Fallback for plain text responses
-    }
+    return contentType?.includes("application/json")
+      ? res.json()
+      : res.text();
   },
 };
