@@ -19,9 +19,9 @@ function extractSpotifyToken(jwt: string): string | null {
   try {
     const payloadBase64 = jwt.split(".")[1];
     const decodedPayload = JSON.parse(atob(payloadBase64));
-    return decodedPayload["SpotifyToken"];
-  } catch {
-    console.error("Failed to decode JWT.");
+    return decodedPayload["SpotifyToken"] ?? null;
+  } catch (error) {
+    console.error("❌ Failed to decode JWT:", error);
     return null;
   }
 }
@@ -33,63 +33,90 @@ export function SpotifyWebPlayer({
   setIsPlaying,
 }: Props) {
   const [player, setPlayer] = useState<Spotify.Player | null>(null);
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [playerInitialized, setPlayerInitialized] = useState(false);
 
+  // ✅ Fetch token once on load
   useEffect(() => {
     const jwtToken = localStorage.getItem("jwt");
-
     if (!jwtToken) {
-      console.error("JWT token missing.");
+      console.error("⚠️ JWT token missing.");
       return;
     }
 
-    const spotifyToken = extractSpotifyToken(jwtToken);
-    if (!spotifyToken) {
-      console.error("Spotify token missing from JWT.");
+    const token = extractSpotifyToken(jwtToken);
+    if (!token) {
+      console.error("⚠️ Spotify token missing from JWT.");
       return;
     }
+
+    setSpotifyToken(token);
+  }, []);
+
+  // ✅ Load SDK script (only once)
+  useEffect(() => {
+    if (sdkLoaded) return; // Prevent duplicate loading
 
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     script.async = true;
-
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const newPlayer = new Spotify.Player({
-        name: "DJ Beb Web Player",
-        getOAuthToken: (cb) => cb(spotifyToken),
-        volume: 0.5,
-      });
-
-      setPlayer(newPlayer);
-      window.spotifyPlayer = newPlayer;
-
-      newPlayer.addListener("ready", ({ device_id }) => {
-        console.log("✅ Ready with Device ID:", device_id);
-        setDeviceId(device_id);
-      });
-
-      newPlayer.addListener("not_ready", ({ device_id }) => {
-        console.log("❌ Device disconnected:", device_id);
-      });
-
-      newPlayer.addListener("player_state_changed", (state) => {
-        if (!state) return;
-
-        setCurrentTrackProgress(state.position);
-        setTrackDuration(state.duration);
-        setIsPlaying(!state.paused);
-      });
-
-      newPlayer.connect();
-    };
+    script.onload = () => setSdkLoaded(true);
 
     document.body.appendChild(script);
 
     return () => {
-      player?.disconnect();
       script.remove();
     };
-  }, []);
+  }, [sdkLoaded]);
 
+  // ✅ Initialize player only after SDK is loaded & user clicks
+  const initializePlayer = () => {
+    if (!spotifyToken) {
+      console.error("🚨 No Spotify token available.");
+      return;
+    }
+    if (!sdkLoaded) {
+      console.error("⚠️ Spotify SDK is not ready yet.");
+      return;
+    }
+    if (playerInitialized) {
+      console.log("🔄 Player already initialized.");
+      return;
+    }
+
+    const newPlayer = new Spotify.Player({
+      name: "DJ Beb Web Player",
+      getOAuthToken: (cb) => cb(spotifyToken),
+      volume: 0.5,
+    });
+
+    setPlayer(newPlayer);
+    window.spotifyPlayer = newPlayer;
+
+    newPlayer.addListener("ready", ({ device_id }) => {
+      console.log("✅ Ready with Device ID:", device_id);
+      setDeviceId(device_id);
+    });
+
+    newPlayer.addListener("not_ready", ({ device_id }) => {
+      console.log("❌ Device disconnected:", device_id);
+    });
+
+    newPlayer.addListener("player_state_changed", (state) => {
+      if (!state) return;
+
+      setCurrentTrackProgress(state.position);
+      setTrackDuration(state.duration);
+      setIsPlaying(!state.paused);
+    });
+
+    console.log("🔄 Connecting player...");
+    newPlayer.connect();
+    setPlayerInitialized(true);
+  };
+
+  // ✅ Auto-reconnect logic
   useEffect(() => {
     if (!player) return;
 
@@ -104,5 +131,14 @@ export function SpotifyWebPlayer({
     return () => clearInterval(interval);
   }, [player]);
 
-  return null;
+  return (
+    <div className="text-center p-4">
+      <button
+        onClick={initializePlayer}
+        className="px-4 py-2 bg-green-500 text-white rounded"
+      >
+        🎵 Activate Player
+      </button>
+    </div>
+  );
 }
