@@ -12,6 +12,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackProgress, setCurrentTrackProgress] = useState(0);
   const [trackDuration, setTrackDuration] = useState(0);
+  const [playerActivated, setPlayerActivated] = useState(false); // ✅ New state
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -27,6 +28,14 @@ export default function App() {
       setIsAuthenticated(false);
     }
   }, []);
+
+  // ✅ Activate player when a playlist is selected
+  const handlePlaylistSelect = (playlistId: string) => {
+    setSelectedPlaylist(playlistId);
+    if (!playerActivated) {
+      setPlayerActivated(true); // ✅ Ensures the player initializes only once
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -49,10 +58,14 @@ export default function App() {
         setIsPlaying={setIsPlaying}
         setCurrentTrackProgress={setCurrentTrackProgress}
         setTrackDuration={setTrackDuration}
+        playerActivated={playerActivated} // ✅ Pass the new state
       />
 
       {!selectedPlaylist ? (
-        <PlaylistSelector onSelect={setSelectedPlaylist} />
+        <PlaylistSelector 
+          onSelect={handlePlaylistSelect} 
+          activatePlayer={() => setPlayerActivated(true)} // ✅ Pass the function
+        />
       ) : (
         <PlaylistView
           playlistId={selectedPlaylist}

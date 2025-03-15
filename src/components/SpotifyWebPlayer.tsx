@@ -13,6 +13,7 @@ interface Props {
   setCurrentTrackProgress: (progress: number) => void;
   setTrackDuration: (duration: number) => void;
   setIsPlaying: (isPlaying: boolean) => void;
+  playerActivated: boolean; // ✅ Triggered from App.tsx when a playlist is selected
 }
 
 function extractSpotifyToken(jwt: string): string | null {
@@ -31,6 +32,7 @@ export function SpotifyWebPlayer({
   setCurrentTrackProgress,
   setTrackDuration,
   setIsPlaying,
+  playerActivated, // ✅ Comes from App.tsx when a playlist is clicked
 }: Props) {
   const [player, setPlayer] = useState<Spotify.Player | null>(null);
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
@@ -70,8 +72,9 @@ export function SpotifyWebPlayer({
     };
   }, [sdkLoaded]);
 
-  // ✅ Initialize player only after SDK is loaded & user clicks
-  const initializePlayer = () => {
+  // ✅ Initialize player when `playerActivated` is true
+  useEffect(() => {
+    if (!playerActivated || playerInitialized) return;
     if (!spotifyToken) {
       console.error("🚨 No Spotify token available.");
       return;
@@ -80,10 +83,8 @@ export function SpotifyWebPlayer({
       console.error("⚠️ Spotify SDK is not ready yet.");
       return;
     }
-    if (playerInitialized) {
-      console.log("🔄 Player already initialized.");
-      return;
-    }
+
+    console.log("🎵 Initializing Spotify Web Player...");
 
     const newPlayer = new Spotify.Player({
       name: "DJ Beb Web Player",
@@ -114,7 +115,7 @@ export function SpotifyWebPlayer({
     console.log("🔄 Connecting player...");
     newPlayer.connect();
     setPlayerInitialized(true);
-  };
+  }, [playerActivated, spotifyToken, sdkLoaded]);
 
   // ✅ Auto-reconnect logic
   useEffect(() => {
@@ -131,14 +132,5 @@ export function SpotifyWebPlayer({
     return () => clearInterval(interval);
   }, [player]);
 
-  return (
-    <div className="text-center p-4">
-      <button
-        onClick={initializePlayer}
-        className="px-4 py-2 bg-green-500 text-white rounded"
-      >
-        🎵 Activate Player
-      </button>
-    </div>
-  );
+  return null; // ✅ No more separate activation button needed
 }

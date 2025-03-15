@@ -9,11 +9,13 @@ interface Playlist {
 
 interface Props {
   onSelect: (id: string) => void;
+  activatePlayer: () => void; // ✅ Add activation function
 }
 
-export function PlaylistSelector({ onSelect }: Props) {
+export function PlaylistSelector({ onSelect, activatePlayer }: Props) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [playerActivated, setPlayerActivated] = useState(false); // ✅ Track player state
 
   useEffect(() => {
     api.getPlaylists()
@@ -26,22 +28,29 @@ export function PlaylistSelector({ onSelect }: Props) {
   return (
     <div 
       className="p-6 w-full max-w-7xl mx-auto flex flex-col items-center justify-center"
-      style={{textAlign: "center" }} // Force center alignment
+      style={{ textAlign: "center" }} 
     > 
-    <div style={{ height: "20px" }}></div> 
+      <div style={{ height: "20px" }}></div> 
       <div 
         className="grid grid-cols-auto-fit gap-6 w-full max-w-6xl mx-auto" 
-        style={{ justifyContent: "center", display: "flex", flexWrap: "wrap" }} // Force full centering
+        style={{ justifyContent: "center", display: "flex", flexWrap: "wrap" }} 
       >
         {playlists.map((playlist) => {
           const images = playlist.images || [];
-          const imageUrl = images.length > 0 ? images[0].url : ""; // ✅ Use the FIRST image, which is the highest resolution
+          const imageUrl = images.length > 0 ? images[0].url : ""; // ✅ Use first image
+
           return (
             <div
               key={playlist.id}
-              onClick={() => onSelect(playlist.id)}
+              onClick={() => {
+                if (!playerActivated) {
+                  activatePlayer(); // ✅ Activate player only on first click
+                  setPlayerActivated(true);
+                }
+                onSelect(playlist.id);
+              }}
               className="cursor-pointer border rounded-lg shadow-md bg-white hover:bg-gray-100 transition transform hover:scale-105 p-2 flex flex-col items-center justify-center"
-              style={{ width: "220px", height: "280px", textAlign: "center" }} // Enforce size and centering
+              style={{ width: "220px", height: "280px", textAlign: "center" }}
             >
               <div 
                 className="flex items-center justify-center rounded-md overflow-hidden"
@@ -77,7 +86,7 @@ export function PlaylistSelector({ onSelect }: Props) {
                   wordWrap: "break-word",
                   overflowWrap: "break-word",
                   whiteSpace: "normal",
-                  maxWidth: "200px", // ✅ Match image width to prevent overflow
+                  maxWidth: "200px", // ✅ Match image width
                 }}
               >
                 {playlist.name}
